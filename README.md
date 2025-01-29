@@ -1,4 +1,4 @@
-# Research Paper Chatbot
+# ScholarLens: Paper Analysis Chatbot
 
 An advanced tool for analyzing research papers using RAG (Retrieval Augmented Generation) and LLMs (deepseek-r1). This tool helps researchers identify research gaps, assess novelty, extract key concepts, and interact with academic papers through natural language queries.
 
@@ -14,7 +14,7 @@ An advanced tool for analyzing research papers using RAG (Retrieval Augmented Ge
 ## Project Structure
 
 ```
-deepseek_chatbot/
+ScholarLens/
 │── app.py              # Streamlit UI implementation
 │── document_processing.py  # PDF extraction & processing
 │── rag_functions.py    # Vector store and LLM pipeline
@@ -26,7 +26,7 @@ deepseek_chatbot/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/realjules/deepseek_chatbot.git
+git clone https://github.com/realjules/ScholarLens.git
 cd deepseek_chatbot
 ```
 
