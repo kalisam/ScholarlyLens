@@ -11,7 +11,7 @@ def init_session_state():
         st.session_state.rag_pipeline = RAGPipeline(ModelConfig())
 
 def main():
-    st.title("Research Paper Analysis Tool")
+    st.title("ScholarLens: Tool for Paper Analysis")
     
     # Initialize session state
     init_session_state()
