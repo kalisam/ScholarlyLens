@@ -10,13 +10,13 @@ from config import ModelConfig
 class DocumentProcessor:
     def __init__(self, config: ModelConfig):
         self.config = config
-        # Initialize spaCy for scientific NER
+        # Initialize spaCy with standard English model
         try:
-            self.nlp = spacy.load("en_core_sci_sm")
-        except:
+            self.nlp = spacy.load("en_core_web_sm")
+        except OSError:
             import os
-            os.system("python -m spacy download en_core_sci_sm")
-            self.nlp = spacy.load("en_core_sci_sm")
+            os.system("python -m spacy download en_core_web_sm")
+            self.nlp = spacy.load("en_core_web_sm")
 
     def load_pdf(self, file_content: bytes) -> List[Document]:
         """Load PDF content and return LangChain documents."""
@@ -68,11 +68,15 @@ class DocumentProcessor:
         return sections
 
     def identify_key_concepts(self, text: str) -> Dict[str, set]:
-        """Extract key scientific concepts using NER."""
+        """Extract key concepts using NER."""
         doc = self.nlp(text)
         concepts = defaultdict(set)
         
+        # Include relevant entity types from standard model
+        relevant_types = {'ORG', 'PERSON', 'GPE', 'WORK_OF_ART', 'DATE', 'NORP'}
+        
         for ent in doc.ents:
-            concepts[ent.label_].add(ent.text)
+            if ent.label_ in relevant_types:
+                concepts[ent.label_].add(ent.text)
             
         return dict(concepts)
