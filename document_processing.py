@@ -1,47 +1,78 @@
-import fitz  # PyMuPDF for extracting text from PDFs
-import re
+from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from typing import Dict, List
+from langchain.schema import Document
+import spacy
+from collections import defaultdict
+import tempfile
+from config import ModelConfig
 
-def extract_text_from_pdf(pdf_path):
-    """
-    Extracts text from a PDF file while preserving sections.
-    """
-    doc = fitz.open(pdf_path)
-    extracted_text = []
-    
-    for page in doc:
-        text = page.get_text("text")
-        extracted_text.append(text)
+class DocumentProcessor:
+    def __init__(self, config: ModelConfig):
+        self.config = config
+        # Initialize spaCy for scientific NER
+        try:
+            self.nlp = spacy.load("en_core_sci_sm")
+        except:
+            import os
+            os.system("python -m spacy download en_core_sci_sm")
+            self.nlp = spacy.load("en_core_sci_sm")
 
-    return "\n".join(extracted_text)
+    def load_pdf(self, file_content: bytes) -> List[Document]:
+        """Load PDF content and return LangChain documents."""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+            temp_file.write(file_content)
+            temp_pdf_path = temp_file.name
+            loader = PDFPlumberLoader(temp_pdf_path)
+            return loader.load()
 
-def clean_text(text):
-    """
-    Cleans extracted text by removing unnecessary spaces and special characters.
-    """
-    text = re.sub(r'\n+', '\n', text)  # Remove excessive newlines
-    text = re.sub(r'\s+', ' ', text)  # Normalize spaces
-    text = text.strip()
-    return text
+    def create_chunks(self, documents: List[Document], embeddings) -> List[Document]:
+        """Split documents into semantic chunks."""
+        text_splitter = SemanticChunker(embeddings)
+        return text_splitter.split_documents(documents)
 
-def chunk_text(text, embedding_model):
-    """
-    Splits text into semantically meaningful chunks.
-    """
-    text_splitter = SemanticChunker(embedding_model)
-    return text_splitter.split_text(text)
+    def extract_sections(self, documents: List[Document]) -> Dict[str, str]:
+        """Extract different sections of the research paper."""
+        full_text = " ".join([doc.page_content for doc in documents])
+        
+        sections = {
+            'abstract': '',
+            'introduction': '',
+            'methods': '',
+            'results': '',
+            'discussion': '',
+            'conclusion': ''
+        }
+        
+        # Simple regex-based section extraction
+        current_section = None
+        lines = full_text.split('\n')
+        
+        for line in lines:
+            line_lower = line.lower()
+            if 'abstract' in line_lower:
+                current_section = 'abstract'
+            elif 'introduction' in line_lower:
+                current_section = 'introduction'
+            elif 'method' in line_lower:
+                current_section = 'methods'
+            elif 'result' in line_lower:
+                current_section = 'results'
+            elif 'discussion' in line_lower:
+                current_section = 'discussion'
+            elif 'conclusion' in line_lower:
+                current_section = 'conclusion'
+            elif current_section:
+                sections[current_section] += line + '\n'
+                
+        return sections
 
-def process_pdf(pdf_path):
-    """
-    Full pipeline: Extracts, cleans, and chunks PDF text.
-    """
-    raw_text = extract_text_from_pdf(pdf_path)
-    clean_text_data = clean_text(raw_text)
-
-    # Initialize embedding model
-    embedding_model = HuggingFaceEmbeddings()
-    
-    chunks = chunk_text(clean_text_data, embedding_model)
-    
-    return chunks
+    def identify_key_concepts(self, text: str) -> Dict[str, set]:
+        """Extract key scientific concepts using NER."""
+        doc = self.nlp(text)
+        concepts = defaultdict(set)
+        
+        for ent in doc.ents:
+            concepts[ent.label_].add(ent.text)
+            
+        return dict(concepts)
