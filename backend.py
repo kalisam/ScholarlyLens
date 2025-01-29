@@ -66,14 +66,20 @@ if st.session_state.vector_store:
         input_variables=["page_content"]
     )
 
+    # # Create QA chain
+    # qa = RetrievalQA.from_chain_type(
+    #     retriever=retriever,
+    #     combine_documents_chain=StuffDocumentsChain(
+    #         llm_chain=llm_chain,
+    #         document_prompt=document_prompt,
+    #         document_variable_name="context"
+    #     )
+    # )
+
     # Create QA chain
     qa = RetrievalQA.from_chain_type(
-        retriever=retriever,
-        combine_documents_chain=StuffDocumentsChain(
-            llm_chain=llm_chain,
-            document_prompt=document_prompt,
-            document_variable_name="context"
-        )
+        llm=llm,
+        retriever=retriever
     )
 
     # Streamlit UI
