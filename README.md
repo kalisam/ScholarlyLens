@@ -1,6 +1,6 @@
-# Research Paper Analysis Tool
+# Research Paper Chatbot
 
-An advanced tool for analyzing research papers using RAG (Retrieval Augmented Generation) and LLMs. This tool helps researchers identify research gaps, assess novelty, extract key concepts, and interact with academic papers through natural language queries.
+An advanced tool for analyzing research papers using RAG (Retrieval Augmented Generation) and LLMs (deepseek-r1). This tool helps researchers identify research gaps, assess novelty, extract key concepts, and interact with academic papers through natural language queries.
 
 ## Features
 
@@ -26,14 +26,14 @@ deepseek_chatbot/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/realjules/deepseek_chatbot.git
 cd deepseek_chatbot
 ```
 
 2. Create and activate a virtual environment (recommended):
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv\Scripts\activate
 ```
 
 3. Install dependencies:
@@ -107,10 +107,6 @@ streamlit run app.py
 ## Contribution
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-[Specify your license here]
 
 ## Acknowledgments
 
