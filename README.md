@@ -1,6 +1,6 @@
 # ScholarLens: Paper Analysis Chatbot
 
-An advanced tool for analyzing research papers using RAG (Retrieval Augmented Generation) and LLMs (deepseek-r1). This tool helps researchers identify research gaps, assess novelty, extract key concepts, and interact with academic papers through natural language queries.
+An advanced tool for analyzing research papers using RAG (Retrieval Augmented Generation) and OpenAI's language models. This tool helps researchers identify research gaps, assess novelty, extract key concepts, and interact with academic papers through natural language queries.
 
 ## Features
 
@@ -20,6 +20,8 @@ ScholarLens/
 │── rag_functions.py    # Vector store and LLM pipeline
 │── config.py           # Configuration settings
 │── requirements.txt    # Project dependencies
+│── .env.example        # Template for environment variables
+│── .gitignore          # Files to exclude from version control
 ```
 
 ## Installation
@@ -27,13 +29,15 @@ ScholarLens/
 1. Clone the repository:
 ```bash
 git clone https://github.com/realjules/ScholarLens.git
-cd deepseek_chatbot
+cd ScholarLens
 ```
 
 2. Create and activate a virtual environment (recommended):
 ```bash
 python -m venv venv
-source venv/Scripts/activate
+source venv/Scripts/activate  # Windows
+# OR
+source venv/bin/activate      # macOS/Linux
 ```
 
 3. Install dependencies:
@@ -46,12 +50,9 @@ pip install -r requirements.txt
 python -m spacy download en_core_sci_sm
 ```
 
-5. Install and start Ollama:
-- Follow instructions at [Ollama's website](https://ollama.ai)
-- Pull the DeepSeek model:
-```bash
-ollama pull deepseek-r1
-```
+5. Set up OpenAI API key:
+   - Copy `.env.example` to `.env`
+   - Add your OpenAI API key to the `.env` file
 
 ## Usage
 
@@ -62,22 +63,23 @@ streamlit run app.py
 
 2. Open your web browser and navigate to the provided URL (typically http://localhost:8501)
 
-3. Upload a research paper PDF
+3. If you haven't set the API key in the `.env` file, you'll be prompted to enter it in the application
 
-4. Explore different analyses through the tabs:
+4. Upload a research paper PDF
+
+5. Explore different analyses through the tabs:
    - Paper Structure: View different sections of the paper
    - Key Concepts: Explore important terms and concepts
    - Research Gaps: Identify potential areas for future research
    - Novelty Analysis: Understand the paper's unique contributions
 
-5. Use the Q&A interface to ask specific questions about the paper
+6. Use the Q&A interface to ask specific questions about the paper
 
 ## Requirements
 
 - Python 3.8+
-- Ollama
+- OpenAI API key
 - 8GB+ RAM recommended
-- GPU optional but recommended for better performance
 
 ## Technical Details
 
@@ -90,8 +92,8 @@ streamlit run app.py
 
 - **RAGPipeline**: Manages the RAG implementation
   - Uses FAISS for vector storage
-  - Implements HuggingFace embeddings
-  - Manages LLM interaction through Ollama
+  - Implements OpenAI embeddings
+  - Manages LLM interaction through OpenAI API
 
 - **Configuration**: Centralized settings management
   - Model parameters
@@ -100,9 +102,9 @@ streamlit run app.py
 
 ### Models Used
 
-- Embeddings: sentence-transformers/all-mpnet-base-v2
-- LLM: DeepSeek through Ollama
-- NER: SpaCy's en_core_sci_sm model
+- Embeddings: OpenAI text-embedding-3-small
+- LLM: OpenAI GPT-4o
+- NER: SpaCy's en_core_web_sm model
 
 ## Contribution
 
@@ -112,8 +114,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - LangChain for the RAG implementation
 - Streamlit for the UI framework
-- HuggingFace for embeddings
-- Ollama for LLM access
+- OpenAI for language model and embeddings
 - SpaCy for NER capabilities
 
 ## Roadmap
