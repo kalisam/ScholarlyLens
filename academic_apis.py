@@ -198,3 +198,59 @@ class AcademicAPIs:
         except Exception as e:
             print(f"Error downloading PDF: {e}")
             return None
+            
+    def get_top_cited_papers(self, field: str = "", limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get the top cited papers from Semantic Scholar, optionally filtered by field.
+        
+        Args:
+            field: Optional field/category to filter papers by
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of top cited papers with metadata
+        """
+        # Construct the API request URL
+        # Use the field as a query if provided, otherwise search for highly cited papers in general
+        query = field if field else "machine learning artificial intelligence deep learning"
+        encoded_query = urllib.parse.quote(query)
+        
+        # Request papers sorted by citation count in descending order
+        request_url = f"{self.semantic_scholar_base_url}/paper/search?query={encoded_query}&limit={limit}&fields=title,abstract,url,authors,year,venue,publicationDate,citationCount,openAccessPdf&sort=citationCount:desc"
+        
+        # Include a reasonable user agent in the headers
+        headers = {
+            "User-Agent": "ScholarLens Research Tool/1.0",
+        }
+        
+        response = requests.get(request_url, headers=headers)
+        
+        if response.status_code != 200:
+            raise Exception(f"Semantic Scholar API request failed with status code {response.status_code}")
+        
+        data = response.json()
+        
+        # Extract the papers from the response
+        papers = []
+        
+        for item in data.get('data', []):
+            authors = []
+            for author in item.get('authors', []):
+                authors.append(author.get('name', ''))
+            
+            paper = {
+                'title': item.get('title', ''),
+                'authors': authors,
+                'abstract': item.get('abstract', ''),
+                'year': item.get('year'),
+                'venue': item.get('venue', ''),
+                'publication_date': item.get('publicationDate'),
+                'citation_count': item.get('citationCount'),
+                'url': item.get('url'),
+                'pdf_url': item.get('openAccessPdf', {}).get('url') if item.get('openAccessPdf') else None,
+                'semantic_scholar_id': item.get('paperId')
+            }
+            
+            papers.append(paper)
+        
+        return papers

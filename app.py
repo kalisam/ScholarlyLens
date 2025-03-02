@@ -10,6 +10,7 @@ from document_processing import DocumentProcessor
 from rag_functions import RAGPipeline
 from config import ModelConfig
 from academic_apis import AcademicAPIs
+from reference_analyzer import ReferenceAnalyzer  # Import the new module
 
 def init_session_state():
     """Initialize session state variables."""
@@ -36,6 +37,10 @@ def init_session_state():
         st.session_state.search_results = []
     if 'selected_paper' not in st.session_state:
         st.session_state.selected_paper = None
+    if 'reference_analyzer' not in st.session_state:
+        st.session_state.reference_analyzer = ReferenceAnalyzer(st.session_state.academic_apis)
+    if 'top_references' not in st.session_state:
+        st.session_state.top_references = []
 
 def process_uploaded_pdf(pdf_content):
     """Process an uploaded or downloaded PDF file."""
@@ -51,6 +56,10 @@ def process_uploaded_pdf(pdf_content):
         sections = st.session_state.processor.extract_sections(docs)
         full_text = " ".join([doc.page_content for doc in docs])
         
+        # Extract top references
+        top_references = st.session_state.reference_analyzer.get_most_cited_references(full_text)
+        st.session_state.top_references = top_references
+        
         # Display analysis tabs
         display_analysis_tabs(sections, full_text)
         
@@ -60,11 +69,12 @@ def process_uploaded_pdf(pdf_content):
 def display_analysis_tabs(sections, full_text):
     """Display tabs for the different paper analyses."""
     # Create tabs for different analyses
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Paper Structure", 
         "Key Concepts",
         "Research Gaps",
-        "Novelty Analysis"
+        "Novelty Analysis",
+        "Top References"  # New tab
     ])
     
     with tab1:
@@ -97,6 +107,10 @@ def display_analysis_tabs(sections, full_text):
                 sections['abstract'] + sections['introduction'] + sections['conclusion']
             )
             st.write(novelty)
+    
+    with tab5:
+        st.header("Most Cited References")
+        display_top_references(st.session_state.top_references)
 
     # QA Interface
     st.header("Ask Questions")
@@ -110,6 +124,63 @@ def display_analysis_tabs(sections, full_text):
                 st.write(response)
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
+
+def display_top_references(references):
+    """Display the most cited references with detailed information."""
+    if not references:
+        st.info("No references found or extracted from the paper.")
+        return
+    
+    st.write(f"Found {len(references)} most cited references in this paper:")
+    
+    for i, ref in enumerate(references):
+        # Create a title that combines available information
+        title_parts = []
+        if 'title' in ref and ref['title']:
+            title_parts.append(ref['title'])
+        if 'year' in ref and ref['year']:
+            title_parts.append(f"({ref['year']})")
+        
+        citation_count = ref.get('frequency', 0)
+        title = " ".join(title_parts) if title_parts else f"Reference {i+1}"
+        
+        with st.expander(f"{i+1}. {title} - Cited {citation_count} times"):
+            # Display author information
+            if 'authors' in ref and ref['authors']:
+                st.write(f"**Authors:** {', '.join(ref['authors'])}")
+            
+            # Display abstract if available
+            if 'abstract' in ref and ref['abstract']:
+                st.write(f"**Abstract:** {ref['abstract']}")
+            
+            # Display additional metadata
+            metadata_items = []
+            if 'year' in ref and ref['year']:
+                metadata_items.append(f"**Year:** {ref['year']}")
+            if 'ref_id' in ref and ref['ref_id']:
+                metadata_items.append(f"**Reference ID:** {ref['ref_id']}")
+            
+            if metadata_items:
+                st.write(" | ".join(metadata_items))
+            
+            # Add buttons for further actions
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if 'url' in ref and ref['url']:
+                    st.markdown(f"[View on Semantic Scholar]({ref['url']})")
+            
+            with col2:
+                if 'pdf_url' in ref and ref['pdf_url']:
+                    if st.button(f"Analyze this reference", key=f"ref_{i}"):
+                        with st.spinner("Downloading paper..."):
+                            pdf_content = st.session_state.academic_apis.download_semantic_scholar_paper(ref['pdf_url'])
+                            if pdf_content:
+                                st.session_state.selected_paper = {
+                                    'title': ref.get('title', f"Reference {i+1}"),
+                                    'content': pdf_content
+                                }
+                                st.rerun()
 
 def search_papers(source, query):
     """Search for papers using the selected API."""
@@ -193,7 +264,11 @@ def main():
         return  # Don't continue until API key is set
     
     # Create tabs for file upload and API search
-    tab_upload, tab_search = st.tabs(["Upload PDF", "Search Academic Databases"])
+    tab_upload, tab_search, tab_references = st.tabs([
+        "Upload PDF", 
+        "Search Academic Databases", 
+        "Top References"  # New standalone tab
+    ])
     
     with tab_upload:
         # Upload PDF
@@ -215,6 +290,15 @@ def main():
         if st.button("Search") and search_query:
             st.session_state.search_results = search_papers(source, search_query)
             display_paper_results(st.session_state.search_results, source)
+    
+    with tab_references:
+        # Display top references from the analyzed paper
+        st.header("Most Cited References")
+        
+        if st.session_state.top_references:
+            display_top_references(st.session_state.top_references)
+        else:
+            st.info("Upload or select a paper first to see the most cited references.")
     
     # If a paper has been selected from search, process it
     if st.session_state.selected_paper:
