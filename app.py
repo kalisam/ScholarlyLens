@@ -1,17 +1,39 @@
 import streamlit as st
+import os
 from document_processing import DocumentProcessor
 from rag_functions import RAGPipeline
 from config import ModelConfig
 
 def init_session_state():
     """Initialize session state variables."""
+    if 'config' not in st.session_state:
+        st.session_state.config = ModelConfig()
+        # Check for API key in environment variables
+        if os.environ.get("OPENAI_API_KEY"):
+            st.session_state.config.openai_api_key = os.environ.get("OPENAI_API_KEY")
+    
     if 'processor' not in st.session_state:
-        st.session_state.processor = DocumentProcessor(ModelConfig())
+        st.session_state.processor = DocumentProcessor(st.session_state.config)
     if 'rag_pipeline' not in st.session_state:
-        st.session_state.rag_pipeline = RAGPipeline(ModelConfig())
+        st.session_state.rag_pipeline = RAGPipeline(st.session_state.config)
 
 def main():
     st.title("ScholarLens: Tool for Paper Analysis")
+    
+    # Display API key input field if not set
+    if not st.session_state.get('config', ModelConfig()).openai_api_key:
+        api_key = st.text_input("Enter OpenAI API Key:", type="password")
+        if api_key:
+            if 'config' not in st.session_state:
+                st.session_state.config = ModelConfig()
+            st.session_state.config.openai_api_key = api_key
+            # Reinitialize with the new API key
+            st.session_state.processor = DocumentProcessor(st.session_state.config)
+            st.session_state.rag_pipeline = RAGPipeline(st.session_state.config)
+            st.success("API key set successfully!")
+        else:
+            st.warning("Please provide an OpenAI API key to continue")
+            return
     
     # Initialize session state
     init_session_state()

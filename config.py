@@ -2,12 +2,13 @@ from dataclasses import dataclass
 
 @dataclass
 class ModelConfig:
-    embedding_model: str = "sentence-transformers/all-mpnet-base-v2"
-    llm_model: str = "deepseek-r1"
+    embedding_model: str = "text-embedding-3-small"
+    llm_model: str = "gpt-4o"
     chunk_size: int = 1000
     chunk_overlap: int = 200
     max_tokens: int = 2048
     search_k: int = 3
+    openai_api_key: str = ""  # This should be set by the user or through environment variables
 
 @dataclass
 class PromptTemplates:

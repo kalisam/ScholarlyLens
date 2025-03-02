@@ -2,9 +2,11 @@ streamlit
 langchain
 langchain-community
 langchain-experimental
+langchain-openai
+openai
 pdfplumber
 faiss-cpu
 sentence-transformers
 spacy
 scikit-learn
-ollama
+python-dotenv

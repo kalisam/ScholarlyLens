@@ -1,6 +1,6 @@
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import Ollama
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains.llm import LLMChain
 from langchain.chains import RetrievalQA
@@ -11,10 +11,15 @@ from config import ModelConfig, PromptTemplates
 class RAGPipeline:
     def __init__(self, config: ModelConfig):
         self.config = config
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=config.embedding_model
+        self.embeddings = OpenAIEmbeddings(
+            model=config.embedding_model,
+            openai_api_key=config.openai_api_key
         )
-        self.llm = Ollama(model=config.llm_model)
+        self.llm = ChatOpenAI(
+            model_name=config.llm_model,
+            openai_api_key=config.openai_api_key,
+            max_tokens=config.max_tokens
+        )
         self.vector_store = None
         self.prompt_templates = PromptTemplates()
 
