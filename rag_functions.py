@@ -7,19 +7,29 @@ from langchain.chains import RetrievalQA
 from typing import List, Optional
 from langchain.schema import Document
 from config import ModelConfig, PromptTemplates
+import os
 
 class RAGPipeline:
     def __init__(self, config: ModelConfig):
         self.config = config
+        
+        # Get API key from config or environment variables
+        api_key = config.openai_api_key or os.environ.get("OPENAI_API_KEY", "")
+        
+        if not api_key:
+            raise ValueError("OpenAI API key not found. Please provide it via the UI or set the OPENAI_API_KEY environment variable.")
+        
         self.embeddings = OpenAIEmbeddings(
             model=config.embedding_model,
-            openai_api_key=config.openai_api_key
+            openai_api_key=api_key
         )
+        
         self.llm = ChatOpenAI(
             model_name=config.llm_model,
-            openai_api_key=config.openai_api_key,
+            openai_api_key=api_key,
             max_tokens=config.max_tokens
         )
+        
         self.vector_store = None
         self.prompt_templates = PromptTemplates()
 

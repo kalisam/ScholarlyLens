@@ -47,9 +47,9 @@ source venv/bin/activate      # macOS/Linux
 pip install -r requirements.txt
 ```
 
-4. Install the scientific NLP model:
+4. Install the standard spaCy model:
 ```bash
-python -m spacy download en_core_sci_sm
+python -m spacy download en_core_web_sm
 ```
 
 5. Set up OpenAI API key:

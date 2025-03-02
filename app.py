@@ -1,6 +1,11 @@
 import streamlit as st
 import os
 import io
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (if it exists)
+load_dotenv()
+
 from document_processing import DocumentProcessor
 from rag_functions import RAGPipeline
 from config import ModelConfig
@@ -16,8 +21,15 @@ def init_session_state():
     
     if 'processor' not in st.session_state:
         st.session_state.processor = DocumentProcessor(st.session_state.config)
-    if 'rag_pipeline' not in st.session_state:
-        st.session_state.rag_pipeline = RAGPipeline(st.session_state.config)
+    
+    # Only initialize RAG pipeline if API key is available
+    if 'rag_pipeline' not in st.session_state and st.session_state.config.openai_api_key:
+        try:
+            st.session_state.rag_pipeline = RAGPipeline(st.session_state.config)
+        except Exception as e:
+            st.error(f"Error initializing RAG pipeline: {e}")
+            st.session_state.rag_pipeline = None
+    
     if 'academic_apis' not in st.session_state:
         st.session_state.academic_apis = AcademicAPIs()
     if 'search_results' not in st.session_state:
@@ -164,18 +176,21 @@ def main():
     
     # Display API key input field if not set
     if not st.session_state.get('config', ModelConfig()).openai_api_key:
+        st.warning("OpenAI API key not found. Please enter it below to continue:")
         api_key = st.text_input("Enter OpenAI API Key:", type="password")
         if api_key:
+            # Update the config
             if 'config' not in st.session_state:
                 st.session_state.config = ModelConfig()
             st.session_state.config.openai_api_key = api_key
-            # Reinitialize with the new API key
-            st.session_state.processor = DocumentProcessor(st.session_state.config)
-            st.session_state.rag_pipeline = RAGPipeline(st.session_state.config)
-            st.success("API key set successfully!")
-        else:
-            st.warning("Please provide an OpenAI API key to continue")
-            return
+            # Initialize RAG pipeline with the new API key
+            try:
+                st.session_state.rag_pipeline = RAGPipeline(st.session_state.config)
+                st.success("API key set successfully!")
+                st.rerun()  # Rerun the app to initialize everything with the new API key
+            except Exception as e:
+                st.error(f"Error initializing with API key: {str(e)}")
+        return  # Don't continue until API key is set
     
     # Create tabs for file upload and API search
     tab_upload, tab_search = st.tabs(["Upload PDF", "Search Academic Databases"])
