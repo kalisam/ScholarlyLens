@@ -5,6 +5,7 @@ An advanced tool for analyzing research papers using RAG (Retrieval Augmented Ge
 ## Features
 
 - **PDF Processing**: Automatically extracts and processes PDF research papers
+- **Academic API Integration**: Search and analyze papers directly from arXiv and Semantic Scholar
 - **Section Analysis**: Identifies and separates key paper sections (abstract, introduction, methods, etc.)
 - **Key Concept Extraction**: Uses scientific NER to identify important concepts and entities
 - **Research Gap Analysis**: Identifies potential research gaps and future work opportunities
@@ -18,6 +19,7 @@ ScholarLens/
 │── app.py              # Streamlit UI implementation
 │── document_processing.py  # PDF extraction & processing
 │── rag_functions.py    # Vector store and LLM pipeline
+│── academic_apis.py    # Academic database API integrations
 │── config.py           # Configuration settings
 │── requirements.txt    # Project dependencies
 │── .env.example        # Template for environment variables
@@ -45,9 +47,9 @@ source venv/bin/activate      # macOS/Linux
 pip install -r requirements.txt
 ```
 
-4. Install the scientific NLP model:
+4. Install the standard spaCy model:
 ```bash
-python -m spacy download en_core_sci_sm
+python -m spacy download en_core_web_sm
 ```
 
 5. Set up OpenAI API key:
@@ -73,7 +75,9 @@ streamlit run app.py
    - Research Gaps: Identify potential areas for future research
    - Novelty Analysis: Understand the paper's unique contributions
 
-6. Use the Q&A interface to ask specific questions about the paper
+6. Alternatively, use the "Search Academic Databases" tab to find papers on arXiv or Semantic Scholar
+
+7. Use the Q&A interface to ask specific questions about the paper
 
 ## Requirements
 
@@ -119,8 +123,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Roadmap
 
-- [ ] Integration with academic APIs (arXiv, Semantic Scholar)
+- [x] Integration with academic APIs (arXiv, Semantic Scholar)
 - [ ] Enhanced citation analysis
 - [ ] Batch processing capabilities
 - [ ] Export functionality for analyses
 - [ ] Visualization improvements
+- [ ] Citation network analysis
+- [ ] Research trend identification

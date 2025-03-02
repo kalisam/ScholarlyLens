@@ -10,3 +10,5 @@ sentence-transformers
 spacy
 scikit-learn
 python-dotenv
+requests
+urllib3
