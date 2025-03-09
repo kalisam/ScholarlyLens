@@ -3,8 +3,13 @@ langchain
 langchain-community
 langchain-experimental
 langchain-openai
+anthropic
+langchain-anthropic
+google-generativeai
+langchain-google-genai
 openai
 pdfplumber
+pymupdf
 faiss-cpu
 sentence-transformers
 spacy
@@ -12,3 +17,12 @@ scikit-learn
 python-dotenv
 requests
 urllib3
+networkx
+plotly
+redis
+pyarrow
+pandas
+matplotlib
+pytest
+streamlit-option-menu
+streamlit-extras
