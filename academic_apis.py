@@ -126,9 +126,19 @@ class AcademicAPIs:
         papers = []
         
         for item in data.get('data', []):
+            if item is None:
+                continue
+                
             authors = []
-            for author in item.get('authors', []):
-                authors.append(author.get('name', ''))
+            authors_list = item.get('authors', []) or []
+            for author in authors_list:
+                if author:
+                    authors.append(author.get('name', ''))
+            
+            pdf_url = None
+            open_access = item.get('openAccessPdf')
+            if open_access and isinstance(open_access, dict):
+                pdf_url = open_access.get('url')
             
             paper = {
                 'title': item.get('title', ''),
@@ -139,7 +149,7 @@ class AcademicAPIs:
                 'publication_date': item.get('publicationDate'),
                 'citation_count': item.get('citationCount'),
                 'url': item.get('url'),
-                'pdf_url': item.get('openAccessPdf', {}).get('url') if item.get('openAccessPdf') else None,
+                'pdf_url': pdf_url,
                 'semantic_scholar_id': item.get('paperId')
             }
             
@@ -234,9 +244,19 @@ class AcademicAPIs:
         papers = []
         
         for item in data.get('data', []):
+            if item is None:
+                continue
+                
             authors = []
-            for author in item.get('authors', []):
-                authors.append(author.get('name', ''))
+            authors_list = item.get('authors', []) or []
+            for author in authors_list:
+                if author:
+                    authors.append(author.get('name', ''))
+            
+            pdf_url = None
+            open_access = item.get('openAccessPdf')
+            if open_access and isinstance(open_access, dict):
+                pdf_url = open_access.get('url')
             
             paper = {
                 'title': item.get('title', ''),
@@ -247,7 +267,7 @@ class AcademicAPIs:
                 'publication_date': item.get('publicationDate'),
                 'citation_count': item.get('citationCount'),
                 'url': item.get('url'),
-                'pdf_url': item.get('openAccessPdf', {}).get('url') if item.get('openAccessPdf') else None,
+                'pdf_url': pdf_url,
                 'semantic_scholar_id': item.get('paperId')
             }
             

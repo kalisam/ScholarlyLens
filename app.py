@@ -1,3 +1,9 @@
+# Fix Streamlit compatibility issues
+try:
+    from streamlit_fix import *
+except ImportError as e:
+    print(f"Error importing streamlit_fix: {e}")
+
 import streamlit as st
 import os
 import io
