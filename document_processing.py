@@ -12,6 +12,8 @@ import io
 from PIL import Image
 import numpy as np
 from config import ModelConfig
+import time
+import re
 
 class ExtractedFigure:
     """Class representing an extracted figure from a PDF."""
@@ -47,8 +49,18 @@ class DocumentProcessor:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
             temp_file.write(file_content)
             temp_pdf_path = temp_file.name
+            
+        try:
             loader = PDFPlumberLoader(temp_pdf_path)
-            return loader.load()
+            documents = loader.load()
+            return documents
+        finally:
+            # Add a small delay and try to delete the temp file
+            try:
+                time.sleep(0.5)
+                os.unlink(temp_pdf_path)
+            except Exception as e:
+                print(f"Warning: Could not delete temporary file {temp_pdf_path}: {str(e)}")
 
     def load_pdf_with_pymupdf(self, file_content: bytes) -> Tuple[List[Document], List[ExtractedFigure], List[ExtractedTable]]:
         """
@@ -63,17 +75,21 @@ class DocumentProcessor:
         documents = []
         figures = []
         tables = []
+        pdf_doc = None
+        temp_pdf_path = None
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-            temp_file.write(file_content)
-            temp_pdf_path = temp_file.name
+        try:
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+                temp_file.write(file_content)
+                temp_pdf_path = temp_file.name
             
-            try:
-                # Open the PDF with PyMuPDF
-                pdf_doc = fitz.open(temp_pdf_path)
-                
-                # Extract text and media elements
-                for page_num, page in enumerate(pdf_doc):
+            # Open the PDF with PyMuPDF
+            pdf_doc = fitz.open(temp_pdf_path)
+            
+            # Extract text and media elements
+            for page_num, page in enumerate(pdf_doc):
+                try:
                     # Extract text
                     text = page.get_text()
                     documents.append(Document(
@@ -82,41 +98,68 @@ class DocumentProcessor:
                     ))
                     
                     # Extract images
-                    image_list = page.get_images(full=True)
-                    for img_idx, img in enumerate(image_list):
-                        xref = img[0]
-                        base_image = pdf_doc.extract_image(xref)
-                        image_bytes = base_image["image"]
-                        
-                        # Try to find caption (simple heuristic - look for "Figure" or "Fig." near the image)
-                        caption = self._find_caption_for_image(text, img_idx)
-                        
-                        figures.append(ExtractedFigure(
-                            image_data=image_bytes,
-                            caption=caption,
-                            page_num=page_num
-                        ))
+                    try:
+                        image_list = page.get_images(full=True)
+                        for img_idx, img in enumerate(image_list):
+                            try:
+                                xref = img[0]
+                                base_image = pdf_doc.extract_image(xref)
+                                if base_image and "image" in base_image:
+                                    image_bytes = base_image["image"]
+                                    
+                                    # Try to find caption
+                                    caption = self._find_caption_for_image(text, img_idx)
+                                    
+                                    figures.append(ExtractedFigure(
+                                        image_data=image_bytes,
+                                        caption=caption,
+                                        page_num=page_num
+                                    ))
+                            except Exception as e:
+                                print(f"Error extracting image {img_idx} on page {page_num}: {str(e)}")
+                    except Exception as e:
+                        print(f"Error processing images on page {page_num}: {str(e)}")
                     
-                    # Extract tables (simplified approach - looks for tabular content)
-                    tables_on_page = self._extract_tables_from_page(page)
-                    for table_idx, table_data in enumerate(tables_on_page):
-                        caption = self._find_caption_for_table(text, table_idx)
-                        tables.append(ExtractedTable(
-                            data=table_data,
-                            caption=caption,
-                            page_num=page_num
-                        ))
+                    # Extract tables
+                    try:
+                        tables_on_page = self._extract_tables_from_page(page)
+                        for table_idx, table_data in enumerate(tables_on_page):
+                            caption = self._find_caption_for_table(text, table_idx)
+                            tables.append(ExtractedTable(
+                                data=table_data,
+                                caption=caption,
+                                page_num=page_num
+                            ))
+                    except Exception as e:
+                        print(f"Error extracting tables on page {page_num}: {str(e)}")
                 
-                pdf_doc.close()
-            finally:
-                os.unlink(temp_pdf_path)
+                except Exception as e:
+                    print(f"Error processing page {page_num}: {str(e)}")
+            
+        except Exception as e:
+            print(f"Error processing PDF: {str(e)}")
+            
+        finally:
+            # Close the PDF document
+            if pdf_doc:
+                try:
+                    pdf_doc.close()
+                except:
+                    pass
+            
+            # Delete the temporary file
+            if temp_pdf_path:
+                try:
+                    time.sleep(0.5)  # Small delay to ensure file isn't in use
+                    os.unlink(temp_pdf_path)
+                except Exception as e:
+                    print(f"Warning: Could not delete temporary file {temp_pdf_path}: {str(e)}")
                 
         return documents, figures, tables
     
     def _find_caption_for_image(self, text: str, img_idx: int) -> str:
         """Find a likely caption for an image based on surrounding text."""
         # Look for patterns like "Figure X:" or "Fig. X:"
-        import re
         patterns = [
             rf"(?:Figure|Fig\.)\s*{img_idx+1}\s*[:\.]\s*([^\n]+)",
             rf"(?:Figure|Fig\.)\s*{img_idx+1}\s*[\.\-]\s*([^\n]+)"
@@ -131,7 +174,6 @@ class DocumentProcessor:
     
     def _find_caption_for_table(self, text: str, table_idx: int) -> str:
         """Find a likely caption for a table based on surrounding text."""
-        import re
         patterns = [
             rf"(?:Table)\s*{table_idx+1}\s*[:\.]\s*([^\n]+)",
             rf"(?:Table)\s*{table_idx+1}\s*[\.\-]\s*([^\n]+)"
@@ -189,7 +231,6 @@ class DocumentProcessor:
     
     def _split_table_row(self, row: str) -> List[str]:
         """Split a table row based on whitespace patterns."""
-        import re
         # Look for groups of whitespace that might separate columns
         return [cell.strip() for cell in re.split(r'\s{2,}', row) if cell.strip()]
 

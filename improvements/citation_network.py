@@ -95,8 +95,13 @@ class CitationNetwork:
                 
                 # Limit to top N citations to avoid too large graphs
                 for citation in citations[:5]:  # Top 5 citations
+                    if citation is None:
+                        continue
+                    
                     cited_title = citation.get('title', 'Unknown paper')
-                    cited_authors = [author.get('name', '') for author in citation.get('authors', [])]
+                    # Safely handle authors which might be None
+                    authors_list = citation.get('authors', []) or []
+                    cited_authors = [author.get('name', '') for author in authors_list if author]
                     cited_year = citation.get('year')
                     
                     # Add the cited paper
