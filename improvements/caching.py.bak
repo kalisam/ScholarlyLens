@@ -233,21 +233,3 @@ cache_manager = SimpleCacheManager()
 def get_cache_manager():
     """Get the singleton cache manager instance"""
     return cache_manager
-
-# Add a stub for Redis setup to maintain compatibility with existing code
-def setup_redis_cache(host: str = 'localhost', port: int = 6379, 
-                     password: Optional[str] = None) -> bool:
-    """
-    Stub function to maintain compatibility with code that expects Redis.
-    Always returns False to indicate Redis is not available.
-    
-    Args:
-        host: Redis host (ignored)
-        port: Redis port (ignored)
-        password: Redis password (ignored)
-        
-    Returns:
-        False to indicate Redis is not being used
-    """
-    logger.warning("Redis support is disabled in this simplified version. Using file cache instead.")
-    return False

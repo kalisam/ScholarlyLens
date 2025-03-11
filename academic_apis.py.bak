@@ -12,8 +12,7 @@ class AcademicAPIs:
         self.arxiv_base_url = "http://export.arxiv.org/api/query"
         self.semantic_scholar_base_url = "https://api.semanticscholar.org/graph/v1"
         # Set a reasonable rate limit to avoid being blocked
-        self.request_delay = 2  # Increased to avoid rate limiting
-        self.max_retries = 3  # seconds between requests
+        self.request_delay = 1  # seconds between requests
 
     def search_arxiv(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
         """
@@ -116,32 +115,7 @@ class AcademicAPIs:
             "User-Agent": "ScholarLens Research Tool/1.0",
         }
         
-        # Add retry logic with exponential backoff
-        retry_count = 0
-        while retry_count < self.max_retries:
-            try:
-                response = requests.get(request_url, headers=headers)
-                
-                # If rate limited, wait and retry
-                if response.status_code == 429:
-                    retry_count += 1
-                    if retry_count < self.max_retries:
-                        sleep_time = self.request_delay * (2 ** retry_count)  # Exponential backoff
-                        print(f"Rate limited by API, retrying in {sleep_time} seconds...")
-                        time.sleep(sleep_time)
-                        continue
-                
-                # For other responses, proceed normally
-                break
-            except Exception as e:
-                print(f"Request error: {e}")
-                retry_count += 1
-                if retry_count < self.max_retries:
-                    time.sleep(self.request_delay)
-                    continue
-                raise
-        
-        # After all retries, use the last response
+        response = requests.get(request_url, headers=headers)
         
         if response.status_code != 200:
             raise Exception(f"Semantic Scholar API request failed with status code {response.status_code}")
@@ -204,32 +178,7 @@ class AcademicAPIs:
             "User-Agent": "ScholarLens Research Tool/1.0",
         }
         
-        # Add retry logic with exponential backoff
-        retry_count = 0
-        while retry_count < self.max_retries:
-            try:
-                response = requests.get(request_url, headers=headers)
-                
-                # If rate limited, wait and retry
-                if response.status_code == 429:
-                    retry_count += 1
-                    if retry_count < self.max_retries:
-                        sleep_time = self.request_delay * (2 ** retry_count)  # Exponential backoff
-                        print(f"Rate limited by API, retrying in {sleep_time} seconds...")
-                        time.sleep(sleep_time)
-                        continue
-                
-                # For other responses, proceed normally
-                break
-            except Exception as e:
-                print(f"Request error: {e}")
-                retry_count += 1
-                if retry_count < self.max_retries:
-                    time.sleep(self.request_delay)
-                    continue
-                raise
-        
-        # After all retries, use the last response
+        response = requests.get(request_url, headers=headers)
         
         if response.status_code != 200:
             raise Exception(f"Semantic Scholar API request failed with status code {response.status_code}")
@@ -284,32 +233,7 @@ class AcademicAPIs:
             "User-Agent": "ScholarLens Research Tool/1.0",
         }
         
-        # Add retry logic with exponential backoff
-        retry_count = 0
-        while retry_count < self.max_retries:
-            try:
-                response = requests.get(request_url, headers=headers)
-                
-                # If rate limited, wait and retry
-                if response.status_code == 429:
-                    retry_count += 1
-                    if retry_count < self.max_retries:
-                        sleep_time = self.request_delay * (2 ** retry_count)  # Exponential backoff
-                        print(f"Rate limited by API, retrying in {sleep_time} seconds...")
-                        time.sleep(sleep_time)
-                        continue
-                
-                # For other responses, proceed normally
-                break
-            except Exception as e:
-                print(f"Request error: {e}")
-                retry_count += 1
-                if retry_count < self.max_retries:
-                    time.sleep(self.request_delay)
-                    continue
-                raise
-        
-        # After all retries, use the last response
+        response = requests.get(request_url, headers=headers)
         
         if response.status_code != 200:
             raise Exception(f"Semantic Scholar API request failed with status code {response.status_code}")
