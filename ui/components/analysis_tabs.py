@@ -106,7 +106,7 @@ def display_key_concepts_tab(full_text):
         if kw_data:
             df = pd.DataFrame(kw_data)
             # Create a bar chart of top keywords by count
-            fig = px.bar(
+            fig = pd.bar(
                 df.head(15), 
                 x='text', 
                 y='score',
